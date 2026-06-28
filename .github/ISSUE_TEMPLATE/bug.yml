@@ -1,0 +1,68 @@
+name: Bug report
+description: Report a reproducible BoardReadyOps defect.
+title: "bug: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a defect. Please provide enough evidence for a maintainer or agent to reproduce, verify, and safely fix the issue.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What failed, and what result did you expect instead?
+      placeholder: BoardReadyOps reports ... but should ...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Use the smallest project, config, command, and input data that reproduces the issue.
+      placeholder: |
+        1. Create or open ...
+        2. Run `boardreadyops ...`
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Paste relevant CLI output, JSON/SARIF snippets, logs, stack traces, or screenshots. Redact secrets.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include tool and platform versions.
+      value: |
+        - BoardReadyOps version:
+        - Node.js version:
+        - pnpm/npm version:
+        - OS:
+        - KiCad version, if relevant:
+        - Install channel: npm / GitHub Action / container / binary / source
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Release impact
+      description: How does this affect fabrication readiness, CI gating, evidence bundles, or agent automation?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: What must be true for this issue to be considered fixed?
+      value: |
+        - [ ] The reproduction no longer fails.
+        - [ ] A regression test covers the bug.
+        - [ ] Documentation or error messaging is updated if user behavior changed.
+    validations:
+      required: true

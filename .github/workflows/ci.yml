@@ -1,0 +1,474 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24"
+
+  UV_VERSION: "0.11.16"
+
+jobs:
+  risk-profile:
+    if: github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops'
+    name: ci / risk-profile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      needs_lint: ${{ steps.classify.outputs.needs_lint }}
+      needs_typecheck: ${{ steps.classify.outputs.needs_typecheck }}
+      needs_unit: ${{ steps.classify.outputs.needs_unit }}
+      needs_unit_matrix: ${{ steps.classify.outputs.needs_unit_matrix }}
+      needs_integration: ${{ steps.classify.outputs.needs_integration }}
+      needs_cross_platform: ${{ steps.classify.outputs.needs_cross_platform }}
+      needs_action_smoke: ${{ steps.classify.outputs.needs_action_smoke }}
+      needs_accessibility: ${{ steps.classify.outputs.needs_accessibility }}
+      needs_build: ${{ steps.classify.outputs.needs_build }}
+      needs_dist: ${{ steps.classify.outputs.needs_dist }}
+      needs_coverage: ${{ steps.classify.outputs.needs_coverage }}
+      needs_mutation: ${{ steps.classify.outputs.needs_mutation }}
+      needs_security: ${{ steps.classify.outputs.needs_security }}
+      needs_sbom: ${{ steps.classify.outputs.needs_sbom }}
+      needs_docs: ${{ steps.classify.outputs.needs_docs }}
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+      full_run: ${{ steps.classify.outputs.full_run }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: changed-files
+        name: Detect changed files
+        shell: bash
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          EVENT_BEFORE: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "${EVENT_NAME}" == "pull_request" ]]; then
+            git fetch --no-tags --depth=100 origin "${BASE_REF}"
+            git diff --name-only "origin/${BASE_REF}...HEAD" > changed-files.txt
+          elif [[ "${EVENT_NAME}" == "push" ]]; then
+            if [[ "${EVENT_BEFORE}" =~ ^0+$ ]]; then
+              git show --name-only --pretty=format: "${HEAD_SHA}" > changed-files.txt
+            else
+              git diff --name-only "${EVENT_BEFORE}" "${HEAD_SHA}" > changed-files.txt
+            fi
+          else
+            git ls-files > changed-files.txt
+          fi
+          echo "Changed files:"
+          sed 's/^/- /' changed-files.txt
+      - id: classify
+        name: Classify CI risk
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: node scripts/ci-risk-profile.mjs changed-files.txt
+
+  lint:
+    needs: risk-profile
+    if: github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops'
+    name: ci / lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
+      - run: pnpm run compatibility:check
+      - run: node scripts/check-action-pins.mjs
+      - run: pnpm run verify:structure
+      - run: pnpm run gc
+      - run: pnpm run knip
+      - name: Setup uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: false
+      - name: Run zizmor advisory scan
+        run: uvx --from zizmor==1.25.2 zizmor .github/workflows --min-severity medium
+
+  typecheck:
+    needs: risk-profile
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_typecheck == 'true'
+    name: ci / typecheck
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+
+  test-unit:
+    needs: risk-profile
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_unit == 'true'
+    name: ci / test-unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:unit
+
+  test-unit-matrix:
+    needs: risk-profile
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_unit_matrix == 'true'
+    name: ci / test-unit-matrix (${{ matrix.os }}, Node ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - windows-2025-vs2026
+          - macos-latest
+        node-version:
+          - 22
+          - 24
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ matrix.node-version }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:unit
+
+  test-int:
+    needs: risk-profile
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_integration == 'true'
+    name: ci / test-int (KiCad ${{ matrix.kicad-version }}, Node ${{ matrix.node-version }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kicad-version: "10.0"
+            kicad-ppa-series: "10.0"
+            node-version: 22
+          - kicad-version: "10.0"
+            kicad-ppa-series: "10.0"
+            node-version: 24
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ matrix.node-version }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - name: Install KiCad ${{ matrix.kicad-version }}
+        run: |
+          set -euo pipefail
+          sudo add-apt-repository --yes "ppa:kicad/kicad-${{ matrix.kicad-ppa-series }}-releases"
+          sudo apt-get update -qq
+          sudo apt-get install --yes kicad
+          version="$(kicad-cli version)"
+          echo "kicad-cli ${version}"
+          if [[ "${version}" != "${{ matrix.kicad-version }}".* ]]; then
+            echo "::error::Expected KiCad ${{ matrix.kicad-version }}.*, got ${version}"
+            exit 1
+          fi
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:int
+
+  cross-platform-paths:
+    needs: risk-profile
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_cross_platform == 'true'
+    name: ci / cross-platform-paths (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - macos-latest
+          - windows-2025-vs2026
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec vitest run tests/integration/cross-platform-paths.test.ts
+
+  test-action:
+    needs: risk-profile
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_action_smoke == 'true'
+    name: ci / test-action
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run test:action
+
+  docs-build:
+    needs: risk-profile
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_docs == 'true'
+    name: ci / docs-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - name: Setup uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: false
+      - name: Install Python docs dependencies
+        run: |
+          docs_venv="${RUNNER_TEMP}/boardreadyops-docs-venv"
+          uv venv "${docs_venv}"
+          uv pip install --python "${docs_venv}/bin/python" -r docs/requirements.txt
+          echo "${docs_venv}/bin" >> "${GITHUB_PATH}"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run docs
+        env:
+          NO_MKDOCS_2_WARNING: "1"
+      - run: python -m mkdocs build --strict --site-dir site
+        env:
+          NO_MKDOCS_2_WARNING: "1"
+
+  accessibility:
+    needs: risk-profile
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_accessibility == 'true'
+    name: ci / accessibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - name: Setup uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: false
+      - name: Install Python docs dependencies
+        run: |
+          docs_venv="${RUNNER_TEMP}/boardreadyops-docs-venv"
+          uv venv "${docs_venv}"
+          uv pip install --python "${docs_venv}/bin/python" -r docs/requirements.txt
+          echo "${docs_venv}/bin" >> "${GITHUB_PATH}"
+      - run: pnpm install --frozen-lockfile
+      - name: Verify Chrome for pa11y
+        run: google-chrome --version
+      - run: pnpm run test:a11y
+
+  build:
+    needs: risk-profile
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_build == 'true'
+    name: ci / build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+
+  verify-dist:
+    needs:
+      - risk-profile
+      - build
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_dist == 'true'
+    name: ci / verify-dist
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run verify:dist
+
+  coverage-gate:
+    needs: risk-profile
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_coverage == 'true'
+    name: ci / coverage-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: warn
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        with:
+          files: coverage/lcov.info
+          fail_ci_if_error: false
+          flags: unit
+
+  mutation:
+    needs: risk-profile
+    name: ci / mutation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_mutation == 'true' && github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run mutation
+      - name: Check mutation thresholds
+        if: always()
+        run: pnpm run mutation:check --summary
+      - name: Upload mutation report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          if-no-files-found: warn
+
+  security:
+    needs: risk-profile
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_security == 'true'
+    name: ci / security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run notice
+      - run: pnpm run security
+
+  sbom:
+    needs: risk-profile
+    name: ci / sbom
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && needs.risk-profile.outputs.needs_sbom == 'true' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - run: corepack enable
+      - run: corepack install
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run sbom
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: sbom
+          path: sbom.cyclonedx.json

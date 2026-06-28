@@ -1,0 +1,10 @@
+{
+  "fixture": "dfm-cpl-mismatch",
+  "description": "A board with U1 and C1 populated, but the CPL/position file only lists R1 and R2. U1 and C1 are missing from the position output, causing a BOM/CPL mismatch.",
+  "defect": "cpl-missing-references",
+  "expectedRules": ["manufacturing.position-coverage"],
+  "expectedSeverities": ["high"],
+  "expectPass": false,
+  "performanceBaselineMs": 200,
+  "runRules": ["manufacturing.position-coverage"]
+}

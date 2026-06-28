@@ -1,0 +1,4 @@
+{
+  "broken": ["bom.compliance", "bom.missing-mpn", "design.board-outline", "design.unique-references"],
+  "fixed": []
+}

@@ -1,0 +1,76 @@
+name: Vendor profile request
+description: Request support for a new PCB manufacturer or assembly vendor profile.
+title: "vendor: "
+labels: ["vendor-profile", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to request a new vendor/manufacturer profile. Profiles define required files, naming conventions, and readiness scoring rules for a specific PCB fab or assembly house.
+  - type: input
+    id: vendor-name
+    attributes:
+      label: Vendor name
+      description: Official company name of the manufacturer or assembly house.
+      placeholder: e.g. JLCPCB, PCBWay, OSH Park, Eurocircuits, Seeed Fusion
+    validations:
+      required: true
+  - type: input
+    id: vendor-url
+    attributes:
+      label: Vendor URL
+      description: Link to the manufacturer's main ordering or capability page.
+      placeholder: https://
+    validations:
+      required: true
+  - type: dropdown
+    id: service-type
+    attributes:
+      label: Service type
+      options:
+        - Fabrication only (bare PCB)
+        - Assembly only (SMT/THT)
+        - Fabrication + Assembly
+        - Prototype service
+        - Production service
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: required-files
+    attributes:
+      label: Required files and naming conventions
+      description: What files does this vendor require? Are there specific naming conventions, layer mappings, or zip structures?
+      placeholder: |
+        - Gerbers: *.gbr, named by layer (GTL, GBL, GTS, GBS, GTO, GBO, GKO)
+        - Drill: *.drl (Excellon format)
+        - BOM: *.csv with specific columns
+        - CPL: *.csv with specific columns
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: ordering-docs
+    attributes:
+      label: Ordering documentation links
+      description: Links to the vendor's official ordering instructions, design rule pages, or file format specifications.
+    validations:
+      required: false
+  - type: textarea
+    id: existing-profiles
+    attributes:
+      label: Comparison to existing profiles
+      description: How does this vendor's requirements differ from JLCPCB, PCBWay, or OSH Park?
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] Profile defines required and recommended file sets.
+        - [ ] Profile is tested against at least one fixture project.
+        - [ ] Profile scoring rules are documented.
+        - [ ] Profile naming follows the existing `kebab-case` convention.
+    validations:
+      required: true

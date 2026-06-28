@@ -1,0 +1,10 @@
+{
+  "fixture": "dfm-no-fiducials",
+  "description": "A board with SMD ICs and resistors but no fiducial marks. Assembly equipment cannot align without fiducials.",
+  "defect": "missing-fiducials",
+  "expectedRules": ["manufacturing.fiducials"],
+  "expectedSeverities": ["high"],
+  "expectPass": false,
+  "performanceBaselineMs": 200,
+  "runRules": ["manufacturing.fiducials"]
+}

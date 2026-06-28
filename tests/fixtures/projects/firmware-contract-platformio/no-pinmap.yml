@@ -1,0 +1,10 @@
+version: 1
+firmware:
+  platformio:
+    pinAssignments: platformio-pins-good.yml
+rules:
+  drc.kicad:
+    enabled: false
+  erc.kicad:
+    enabled: false
+fail-on: high

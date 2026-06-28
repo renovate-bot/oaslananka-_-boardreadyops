@@ -1,0 +1,91 @@
+name: RFC — Request for Comments
+description: Propose a significant design, architecture, or workflow change that needs review before implementation.
+title: "rfc: "
+labels: ["rfc", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for changes that affect public contracts, architecture, cross-cutting behavior, or community workflow. RFCs are reviewed before implementation begins.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One paragraph describing the proposed change and why it matters.
+      placeholder: This RFC proposes ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI contract
+        - GitHub Action contract
+        - Configuration schema
+        - Rule system
+        - Evidence bundle schema
+        - Policy engine
+        - Waiver system
+        - Vendor profiles
+        - Reports / dashboard
+        - Provenance / attestations
+        - Plugin SDK
+        - Cloud / GitHub App
+        - Developer workflow
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: What problem does this solve? What is broken, risky, or missing today?
+      placeholder: Today, teams cannot ... because ...
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Proposed design
+      description: Describe the design in enough detail that a reviewer can evaluate correctness. Include schema changes, CLI contract changes, type signatures, or sequence diagrams where helpful.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches were evaluated? Why were they rejected?
+    validations:
+      required: false
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and open questions
+      description: Backward compatibility, migration, security, performance, scope creep.
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] Design is approved by a maintainer before implementation starts.
+        - [ ] Breaking changes include a migration note.
+        - [ ] Schema or contract changes are reflected in test fixtures and snapshots.
+        - [ ] Documentation is updated before the PR is merged.
+    validations:
+      required: true
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Target milestone
+      options:
+        - v1.6.0 — Artifact Generation MVP
+        - v1.7.0 — Release Prepare Pipeline
+        - v1.8.0 — Visual Review & Vendor Readiness
+        - v1.9.0 — Policy, Waivers & Provenance
+        - v2.0.0 — Hardware Release OS
+        - Backlog
+    validations:
+      required: false

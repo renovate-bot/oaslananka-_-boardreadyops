@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/oaslananka/boardreadyops/schemas/generate-recipe-v1.json",
+  "title": "BoardReadyOps generation recipe",
+  "description": "Declarative recipe describing which first-party KiCad manufacturing outputs `boardreadyops generate` should produce.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["steps"],
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "description": "Recipe schema version. Only version 1 is supported."
+    },
+    "outputDir": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Directory, relative to the project root, that receives generated outputs. Defaults to build/boardreadyops-generate."
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Ordered list of output steps to produce.",
+      "items": { "$ref": "#/$defs/step" }
+    }
+  },
+  "$defs": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "description": "The manufacturing output this step produces.",
+          "enum": ["gerbers", "drill", "bom", "positions", "schematic-pdf", "board-pdf"]
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether the step runs. Defaults to true."
+        },
+        "output": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Output path, relative to the recipe output directory. Defaults to a per-kind path. Gerber and drill outputs are directories; all other outputs are files."
+        }
+      }
+    }
+  }
+}

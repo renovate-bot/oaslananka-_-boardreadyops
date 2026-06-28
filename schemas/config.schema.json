@@ -1,0 +1,638 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/oaslananka/boardreadyops/schemas/config-v1.json",
+  "title": "BoardReadyOps configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "mode": {
+      "enum": ["warn", "enforce"]
+    },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mode": {
+            "enum": ["warn", "enforce"]
+          },
+          "pinmap": {
+            "type": "string"
+          },
+          "bom": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "severity": {
+                      "enum": ["critical", "high", "medium", "low", "info"]
+                    },
+                    "severity-overrides": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "enum": ["critical", "high", "medium", "low", "info"]
+                      }
+                    },
+                    "ignore-refs": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "required": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "bom": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "vendor": {
+            "$ref": "#/$defs/vendorConfig"
+          },
+          "firmware": {
+            "$ref": "#/$defs/firmwareConfig"
+          }
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "severity": {
+                "enum": ["critical", "high", "medium", "low", "info"]
+              },
+              "severity-overrides": {
+                "type": "object",
+                "additionalProperties": {
+                  "enum": ["critical", "high", "medium", "low", "info"]
+                }
+              },
+              "ignore-refs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "required": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "patterns": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "fail-on": {
+      "enum": ["critical", "high", "medium", "low", "never"]
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fail-on": {
+            "enum": ["critical", "high", "medium", "low", "never"]
+          },
+          "require": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "clean-drc",
+                "clean-erc",
+                "gerber",
+                "drill",
+                "position",
+                "bom",
+                "changelog",
+                "tagged-release",
+                "no-eol-components"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enforce": {
+          "type": "boolean"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "type"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "enum": [
+                  "max-severity",
+                  "max-findings",
+                  "min-readiness-score",
+                  "require-readiness-status",
+                  "require-required-outputs",
+                  "forbid-rules",
+                  "forbid-expired-waivers",
+                  "forbid-stale-waivers"
+                ]
+              },
+              "severity": {
+                "enum": ["critical", "high", "medium", "low", "info"]
+              },
+              "max": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "score": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "status": {
+                "type": "array",
+                "items": {
+                  "enum": ["ready", "at-risk", "blocked"]
+                }
+              },
+              "rules": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "waivers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule", "owner", "reason"],
+        "properties": {
+          "rule": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fingerprint": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{64}$"
+          },
+          "project": {
+            "type": "string",
+            "minLength": 1
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expires": {
+            "type": "string",
+            "format": "date"
+          },
+          "approvedBy": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "suppressions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule", "reason"],
+        "properties": {
+          "rule": {
+            "type": "string",
+            "minLength": 1
+          },
+          "project": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expires": {
+            "type": "string",
+            "format": "date"
+          },
+          "refs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "fingerprint": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{64}$"
+          }
+        }
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "mode"],
+      "properties": {
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mode": {
+          "enum": ["new-only", "all"]
+        }
+      }
+    },
+    "fix": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allow": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "notifiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slack": {
+          "$ref": "#/$defs/webhookNotifier"
+        },
+        "teams": {
+          "$ref": "#/$defs/webhookNotifier"
+        },
+        "discord": {
+          "$ref": "#/$defs/webhookNotifier"
+        },
+        "telegram": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "botTokenEnv": {
+              "type": "string",
+              "minLength": 1
+            },
+            "chatId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minSeverity": {
+              "$ref": "#/$defs/severity"
+            }
+          }
+        },
+        "email": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "smtpEnv": {
+              "type": "string",
+              "minLength": 1
+            },
+            "from": {
+              "type": "string",
+              "minLength": 1
+            },
+            "recipients": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "minSeverity": {
+              "$ref": "#/$defs/severity"
+            }
+          }
+        }
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sarif": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "const": false
+            }
+          ]
+        },
+        "json": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "const": false
+            }
+          ]
+        },
+        "markdown": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "const": false
+            }
+          ]
+        },
+        "junit": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "const": false
+            }
+          ]
+        },
+        "html": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "const": false
+            }
+          ]
+        }
+      }
+    },
+    "vendor": {
+      "$ref": "#/$defs/vendorConfig"
+    },
+    "pluginPermissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pluginPermission"
+          },
+          "uniqueItems": true
+        },
+        "allow": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/pluginPermission"
+            },
+            "uniqueItems": true
+          }
+        },
+        "deny": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/pluginPermission"
+            },
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "firmware": {
+      "$ref": "#/$defs/firmwareConfig"
+    }
+  },
+  "$defs": {
+    "severity": {
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    "webhookNotifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "webhookEnv": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minSeverity": {
+          "$ref": "#/$defs/severity"
+        }
+      }
+    },
+    "vendorConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "service": {
+          "enum": ["fabrication", "assembly", "fabrication+assembly"]
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "board": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "layers": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "thicknessMm": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "finish": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          }
+        },
+        "assembly": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sides": {
+              "type": "array",
+              "items": {
+                "enum": ["top", "bottom", "both"]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "requiresFiducials": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "pluginPermission": {
+      "enum": ["fs:read", "fs:write", "network", "process", "kicad-cli"]
+    },
+    "firmwareConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "platformio": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pinAssignments": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "arduino": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pinAssignments": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,137 @@
+:root {
+  --boardreadyops-link-underline-offset: 0.15em;
+}
+
+[data-md-color-scheme="default"] .md-nav__link {
+  color: #1f2937;
+  opacity: 1;
+}
+
+[data-md-color-scheme="default"] .md-nav__link:is(:focus, :hover),
+[data-md-color-scheme="default"] .md-nav__link--active {
+  color: #004b8d;
+  text-decoration: underline;
+  text-underline-offset: var(--boardreadyops-link-underline-offset);
+}
+
+[data-md-color-scheme="slate"] .md-nav__link {
+  color: #e5e7eb;
+  opacity: 1;
+}
+
+[data-md-color-scheme="slate"] .md-nav__link:is(:focus, :hover),
+[data-md-color-scheme="slate"] .md-nav__link--active {
+  color: #bfdbfe;
+  text-decoration: underline;
+  text-underline-offset: var(--boardreadyops-link-underline-offset);
+}
+
+[data-md-color-scheme="slate"] .md-nav__link--active {
+  font-weight: 700;
+}
+
+[data-md-color-scheme="slate"] .md-nav__item .md-nav__link--passed {
+  color: #d1d5db;
+}
+
+.md-typeset h1 {
+  background: transparent;
+}
+
+.md-typeset h1:focus-visible {
+  outline: 3px solid #004b8d;
+  outline-offset: 0.2em;
+}
+
+.md-header .md-source,
+.md-header .md-source__repository,
+.md-header .md-source__fact {
+  color: #ffffff;
+  opacity: 1;
+}
+
+.md-header .md-source:is(:focus, :hover) .md-source__repository,
+.md-header .md-source:is(:focus, :hover) .md-source__fact {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: var(--boardreadyops-link-underline-offset);
+}
+
+.md-footer,
+.md-footer-meta {
+  color: #ffffff;
+}
+
+.md-footer *,
+.md-footer-meta * {
+  color: #ffffff;
+  opacity: 1;
+}
+
+.md-footer a {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: var(--boardreadyops-link-underline-offset);
+}
+
+.md-tabs {
+  background: #1f2937;
+  height: auto;
+  overflow: visible;
+}
+
+.md-tabs .md-grid,
+.md-tabs__list {
+  overflow: visible;
+}
+
+.md-tabs__list {
+  flex-wrap: wrap;
+  white-space: normal;
+}
+
+.md-tabs__item {
+  height: auto;
+}
+
+.md-tabs:not([hidden]) .md-tabs__link,
+.md-tabs:not([hidden]) .md-tabs__link * {
+  color: #ffffff;
+  opacity: 1;
+  transform: none;
+}
+
+.md-tabs:not([hidden]) .md-tabs__link:is(:focus, :hover) {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: var(--boardreadyops-link-underline-offset);
+}
+
+.md-typeset a {
+  text-decoration: underline;
+  text-underline-offset: var(--boardreadyops-link-underline-offset);
+}
+
+.md-typeset a:is(:focus, :hover) {
+  text-decoration-thickness: 0.12em;
+}
+
+.boardreadyops-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+}
+
+.highlight:focus,
+.highlight code:focus,
+.md-typeset pre > code:focus,
+.md-typeset pre:focus {
+  outline: 3px solid #004b8d;
+  outline-offset: 2px;
+}

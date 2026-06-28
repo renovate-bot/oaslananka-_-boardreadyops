@@ -1,0 +1,8 @@
+{
+  "fixture": "firmware-contract-platformio",
+  "expectedRules": ["firmware.platformio-pin-contract"],
+  "expectedSeverities": ["high"],
+  "expectPass": false,
+  "performanceBaselineMs": 100,
+  "runRules": ["firmware.platformio-pin-contract"]
+}

@@ -1,0 +1,8 @@
+(kicad_pcb
+  (version 20250114)
+  (title_block (title "dfm-cpl-mismatch") (rev "1.0.0"))
+  (footprint "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm" (property "Reference" "U1") (layer "F.Cu") (at 50 50))
+  (footprint "Resistor_SMD:R_0402_1005Metric" (property "Reference" "R1") (layer "F.Cu") (at 40 40))
+  (footprint "Resistor_SMD:R_0402_1005Metric" (property "Reference" "R2") (layer "F.Cu") (at 45 40))
+  (footprint "Capacitor_SMD:C_0402_1005Metric" (property "Reference" "C1") (layer "F.Cu") (at 55 40))
+)

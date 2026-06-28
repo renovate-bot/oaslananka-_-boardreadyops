@@ -1,0 +1,59 @@
+name: Feature request
+description: Request a scoped BoardReadyOps capability.
+title: "feat: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for product, workflow, CI, reporting, release, or integration improvements. Keep the request outcome-focused and testable.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What workflow is blocked or risky today?
+      placeholder: Teams cannot ... because ...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the smallest useful behavior change.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI
+        - GitHub Action
+        - KiCad integration
+        - Rules
+        - Vendor profiles
+        - Reports
+        - Release evidence
+        - Agent automation
+        - Documentation
+        - Security / supply chain
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing commands, workarounds, or external tools that were considered.
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] The behavior is covered by unit, integration, or snapshot tests.
+        - [ ] CLI, JSON, SARIF, report, or Action contracts are documented when affected.
+        - [ ] The change is backward compatible or includes a migration note.
+    validations:
+      required: true

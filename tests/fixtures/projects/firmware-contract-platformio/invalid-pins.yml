@@ -1,0 +1,6 @@
+version: 1
+pins:
+  - designator: U1
+    pin: ""
+    net: LED_STATUS
+    firmware: LED_STATUS

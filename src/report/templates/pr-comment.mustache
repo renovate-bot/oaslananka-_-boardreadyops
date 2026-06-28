@@ -1,0 +1,73 @@
+<!-- boardreadyops:sticky:v1 -->
+{{> summary}}
+
+{{#hasFindings}}
+## {{labels.topFindings}}
+
+{{#topFindings}}
+- **{{severity}}** `{{ruleId}}` in `{{report.location}}` (`{{report.stableId}}`): {{message}}
+{{/topFindings}}
+{{/hasFindings}}
+{{^hasFindings}}
+{{labels.noFindings}}
+{{/hasFindings}}
+{{#hasFixes}}
+
+## {{labels.fix}}
+
+{{#fixFindings}}
+- `{{ruleId}}` in `{{report.location}}` (`{{report.stableId}}`): {{fix.description}}
+{{#fix.steps}}
+  1. {{.}}
+{{/fix.steps}}
+{{/fixFindings}}
+{{/hasFixes}}
+
+{{#hasFabricationDiff}}
+## {{labels.fabricationChanges}}
+
+### {{labels.bom}}
+{{#fabrication.bom.hasRows}}
+| {{labels.ref}} | {{labels.previous}} | {{labels.current}} | {{labels.status}} |
+| --- | --- | --- | --- |
+{{#fabrication.bom.rows}}
+| {{reference}} | {{previous}} | {{current}} | {{status}} |
+{{/fabrication.bom.rows}}
+{{#fabrication.bom.truncated}}
+_{{labels.bomDiffTruncated}}_
+{{/fabrication.bom.truncated}}
+{{/fabrication.bom.hasRows}}
+{{^fabrication.bom.hasRows}}
+{{labels.noBomChanges}}
+{{/fabrication.bom.hasRows}}
+
+### {{labels.manufacturingOutputs}}
+{{#fabrication.outputs}}
+- {{kind}}: {{status}}{{#summary}} ({{summary}}){{/summary}}
+{{/fabrication.outputs}}
+
+{{#fabrication.findings.hasAdded}}
+### {{labels.newFindings}}
+{{#fabrication.findings.added}}
+- **{{severity}}** `{{ruleId}}` in `{{report.location}}` (`{{report.stableId}}`): {{message}}
+{{/fabrication.findings.added}}
+{{#fabrication.findings.addedTruncated}}
+_{{fabrication.findings.addedRemainingLabel}}_
+{{/fabrication.findings.addedTruncated}}
+{{/fabrication.findings.hasAdded}}
+{{/hasFabricationDiff}}
+
+{{#hasPlugins}}
+## {{labels.plugins}}
+
+{{#plugins}}
+- `{{name}}` {{version}} from `{{specifier}}` — permissions: {{permissionsSummary}}
+{{/plugins}}
+
+{{/hasPlugins}}{{#hasArtifacts}}
+## {{labels.artifacts}}
+
+{{#artifacts}}
+- [{{label}}]({{{url}}})
+{{/artifacts}}
+{{/hasArtifacts}}

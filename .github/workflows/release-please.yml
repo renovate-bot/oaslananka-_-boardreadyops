@@ -1,0 +1,71 @@
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24"
+
+jobs:
+  release-please:
+    if: github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+        continue-on-error: true
+      - name: Set up Node for release artifact regeneration
+        if: steps.release.outputs.pr != ''
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - name: Regenerate version-derived files on the release pull request
+        if: steps.release.outputs.pr != ''
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_BRANCH: release-please--branches--main--components--boardreadyops
+          HUSKY: "0"
+        run: |
+          set -euo pipefail
+          workdir="$(mktemp -d)"
+          git clone --branch "$PR_BRANCH" "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "$workdir"
+          cd "$workdir"
+          corepack enable
+          corepack install
+          pnpm install --frozen-lockfile
+          # Version bump leaves dist bundles and docs/release/history.md stale;
+          # rebuild and regenerate so the release PR merges green
+          # (ci/verify-dist, ci/lint gc check).
+          pnpm run build
+          pnpm run release:history
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -am "chore: regenerate dist and release history for the release"
+            git push origin "HEAD:${PR_BRANCH}"
+          fi
+      - name: Dispatch npm publish
+        if: steps.release.outputs.release_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag_name }}
+        run: gh workflow run publish-npm.yml --repo "${{ github.repository }}" -f tag="${RELEASE_TAG}" -f prerelease=false -f update_floating_tags=true

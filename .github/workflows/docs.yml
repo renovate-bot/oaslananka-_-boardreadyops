@@ -1,0 +1,117 @@
+name: docs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/docs.yml
+      - docs/compatibility.yaml
+      - docs/support-matrix.md
+      - docs/**
+      - CHANGELOG.md
+      - mkdocs.yml
+      - package.json
+      - packages/plugin-sdk/**
+      - pnpm-lock.yaml
+      - scripts/compatibility.mjs
+      - scripts/generate-api-docs.mjs
+      - scripts/generate-release-history.mjs
+      - scripts/generate-rule-docs.mjs
+      - scripts/update-action-inputs-docs.mjs
+      - scripts/docs-build.mjs
+      - typedoc.json
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  UV_VERSION: "0.11.16"
+
+jobs:
+  build:
+    if: github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      pages: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          persist-credentials: false
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install package manager
+        run: corepack install
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: .github/workflows/docs.yml
+
+      - name: Install Python docs dependencies
+        run: |
+          docs_venv="${RUNNER_TEMP}/boardreadyops-docs-venv"
+          uv venv "${docs_venv}"
+          uv pip install --python "${docs_venv}/bin/python" -r docs/requirements.txt
+          echo "${docs_venv}/bin" >> "${GITHUB_PATH}"
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate docs
+        run: pnpm run docs
+        env:
+          NO_MKDOCS_2_WARNING: "1"
+
+      - name: Build MkDocs site
+        run: python -m mkdocs build --strict --site-dir site
+        env:
+          NO_MKDOCS_2_WARNING: "1"
+
+      - name: Upload GitHub Pages artifact
+        id: upload-pages
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+        with:
+          path: site
+
+  deploy:
+    if: (github.repository_owner == 'oaslananka' || github.repository_owner == 'oaslananka-ops') && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    needs: build
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128

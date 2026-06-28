@@ -1,0 +1,189 @@
+# BoardReadyOps Cloud — Dashboard Data and Artifact Storage Model
+
+**Issue:** [#305](https://github.com/oaslananka/boardreadyops/issues/305)
+**Related:** [ADR-0008 — Vercel control plane](adr/0008-vercel-control-plane.md), [GitHub App RFC](github-app-rfc.md)
+
+---
+
+## Overview
+
+This document defines the minimum data model required for the hosted BoardReadyOps dashboard and API. It is intentionally schema-first to guide implementation without prematurely committing to ORM details.
+
+All tables are scoped to a GitHub App `installation_id`. Cross-installation data access is not permitted.
+
+---
+
+## Entities
+
+### Installation
+
+Represents a GitHub App installation on an organization or personal account.
+
+```typescript
+interface Installation {
+  id: string;                      // internal UUID
+  githubInstallationId: number;    // GitHub App installation_id
+  accountLogin: string;            // org or user login
+  accountType: "Organization" | "User";
+  planTier: "free" | "pro" | "team";
+  createdAt: Date;
+  suspendedAt?: Date;
+}
+```
+
+### Repository
+
+A repository registered under an installation.
+
+```typescript
+interface Repository {
+  id: string;
+  installationId: string;           // → Installation.id
+  githubRepoId: number;
+  owner: string;
+  name: string;
+  private: boolean;
+  defaultBranch: string;
+  enabledAt: Date;
+  disabledAt?: Date;
+}
+```
+
+### ReleaseRun
+
+One BoardReadyOps check execution on a specific commit.
+
+```typescript
+interface ReleaseRun {
+  id: string;
+  repositoryId: string;             // → Repository.id
+  commitSha: string;
+  ref: string;                      // branch or tag
+  pullRequestNumber?: number;
+  triggerKind: "push" | "pr" | "manual" | "workflow_dispatch";
+  status: "queued" | "running" | "completed" | "timed_out" | "failed";
+  decision: "pass" | "fail" | "error" | null;
+  startedAt: Date;
+  completedAt?: Date;
+  durationMs?: number;
+  boardReadyOpsVersion?: string;
+  kicadVersion?: string;
+  githubCheckRunId?: number;
+  // Derived summary counts (denormalized for dashboard queries)
+  findingCountError: number;
+  findingCountHigh: number;
+  findingCountMedium: number;
+  findingCountLow: number;
+  findingCountInfo: number;
+  readinessScore?: number;
+}
+```
+
+### Finding
+
+Individual rule violation from a release run.
+
+```typescript
+interface Finding {
+  id: string;
+  runId: string;                    // → ReleaseRun.id
+  ruleId: string;                   // e.g. "manufacturing.fiducials"
+  severity: "error" | "high" | "medium" | "low" | "info";
+  message: string;
+  path?: string;
+  kind?: string;
+  waivedAt?: Date;
+  waiverId?: string;                // → Waiver.id if waived
+}
+```
+
+### Artifact
+
+A file included in the release evidence bundle.
+
+```typescript
+interface Artifact {
+  id: string;
+  runId: string;                    // → ReleaseRun.id
+  kind: "gerber" | "drill" | "bom" | "position" | "pdf" | "step" | "report" | "manifest" | "other";
+  name: string;                     // display name
+  storagePath: string;              // internal path in artifact store (not public)
+  sha256: string;
+  bytes: number;
+  role: "fabrication" | "assembly" | "documentation" | "report" | "evidence";
+  uploadedAt: Date;
+}
+```
+
+### Waiver
+
+An intentional risk acceptance for a specific finding.
+
+```typescript
+interface Waiver {
+  id: string;
+  repositoryId: string;             // → Repository.id
+  ruleId: string;
+  reason: string;
+  owner: string;                    // email or login of approver
+  approvedBy?: string;
+  expiresAt: Date;
+  createdAt: Date;
+  revokedAt?: Date;
+}
+```
+
+### Policy
+
+Stored release policy configuration for a repository.
+
+```typescript
+interface Policy {
+  id: string;
+  repositoryId: string;             // → Repository.id
+  configJson: string;               // serialized policy YAML/JSON
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+---
+
+## Private Artifact Access
+
+Artifacts for private repositories are stored with a non-guessable path prefix and are never served from a public URL.
+
+**Download flow:**
+
+1. Authenticated client calls `GET /api/v1/runs/{runId}/artifacts/{artifactId}/download`
+2. API verifies the caller has `read` access to the installation (via GitHub App installation token)
+3. API generates a signed URL with a 15-minute TTL pointing to the storage backend
+4. Client downloads directly from the signed URL
+
+No artifact binary content passes through the API server on download.
+
+---
+
+## Dashboard Pages and Required Data
+
+| Page | Required entities |
+|---|---|
+| Repository overview | `Repository`, last 10 `ReleaseRun` (summary) |
+| Run detail | `ReleaseRun`, `Finding[]`, `Artifact[]` (manifest) |
+| Evidence browser | `Artifact[]` with signed download URLs |
+| Waiver management | `Waiver[]`, `Finding[]` (waived) |
+| Policy configuration | `Policy`, `ReleaseRun` (simulated) |
+| Release history diff | Two `ReleaseRun` records + associated `Finding[]` |
+
+---
+
+## Future Migration Path
+
+The data model is designed to be database-agnostic (no PostgreSQL-specific types in the schema above). Migration considerations:
+
+- **Schema versioning**: use a `schema_version` table and Prisma migrations from day 1.
+- **Multi-region**: findings and artifacts are append-only; replication to read replicas is straightforward.
+- **Tenant isolation**: all queries filter by `installationId`; adding row-level security (RLS) in PostgreSQL does not require schema changes.
+- **Artifact store swap**: `storagePath` is internal. Switching from Vercel Blob to R2 or S3 requires a data migration script but no schema change.
+- **Self-hosted**: the data model supports a self-hosted deployment by replacing the GitHub App credentials and storage backend without structural changes.

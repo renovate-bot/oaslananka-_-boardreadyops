@@ -1,0 +1,74 @@
+name: Rule proposal
+description: Propose a new release-readiness, DFM, DFA, BOM, pinmap, or governance rule.
+title: "rule: "
+labels: ["rule-proposal", "needs-triage"]
+body:
+  - type: input
+    id: rule-id
+    attributes:
+      label: Rule ID
+      description: Use the existing namespace pattern, for example `manufacturing.soldermask-sliver`.
+      placeholder: manufacturing.example-rule
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - BOM
+        - Design
+        - DRC
+        - ERC
+        - Firmware
+        - Manufacturing / DFM
+        - Assembly / DFA
+        - Pinmap
+        - Release governance
+        - Vendor profile
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Rule behavior
+      description: What should the rule inspect, and when should it produce a finding?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence inputs
+      description: Which files or reports are required? KiCad PCB/schematic, DRC/ERC JSON, BOM, CPL, jobset, vendor profile, release manifest, etc.
+      placeholder: |
+        - Source files:
+        - Generated reports:
+        - Vendor/profile fields:
+    validations:
+      required: true
+  - type: textarea
+    id: severity
+    attributes:
+      label: Suggested severity and rationale
+      description: Explain the fabrication, assembly, electrical, or release-risk impact.
+      placeholder: High because this can cause ...
+    validations:
+      required: true
+  - type: textarea
+    id: false-positives
+    attributes:
+      label: Expected false positives / waiver cases
+      description: List legitimate cases where the rule should be suppressible or vendor-dependent.
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] Rule metadata, explanation, and documentation are added.
+        - [ ] Positive and negative fixtures are covered by tests.
+        - [ ] JSON/SARIF output includes stable fingerprints and useful evidence.
+        - [ ] Vendor/profile assumptions are explicit when applicable.
+    validations:
+      required: true

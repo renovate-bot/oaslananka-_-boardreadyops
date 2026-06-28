@@ -1,0 +1,103 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`release diff engine > produces a stable diff snapshot for a sample release pair 1`] = `
+{
+  "fabrication": {
+    "bom": {
+      "rows": [
+        {
+          "current": "NEW-1",
+          "previous": "OLD-1",
+          "reference": "R1",
+          "status": "changed",
+        },
+        {
+          "current": "ADDED-3",
+          "previous": "",
+          "reference": "R3",
+          "status": "added",
+        },
+        {
+          "current": "KEEP-2",
+          "previous": "KEEP-2",
+          "reference": "R2",
+          "status": "unchanged",
+        },
+      ],
+      "truncated": false,
+    },
+    "findings": {
+      "added": [
+        {
+          "fingerprint": "8bae385fd427492fe0eaf5ce6f3ea4f3084e7034a61d48676042affd9873ba32",
+          "message": "manufacturing.outputs-present finding",
+          "resource": {
+            "kind": "pcb",
+            "path": "board.kicad_pcb",
+          },
+          "ruleId": "manufacturing.outputs-present",
+          "severity": "critical",
+        },
+      ],
+      "removed": [
+        {
+          "fingerprint": "bd202d5b68441a5846163a5314332922de25ae3fed07e7304be754e68653daca",
+          "message": "bom.missing-mpn finding",
+          "resource": {
+            "kind": "pcb",
+            "path": "board.kicad_pcb",
+          },
+          "ruleId": "bom.missing-mpn",
+          "severity": "high",
+        },
+      ],
+      "unchanged": [
+        {
+          "fingerprint": "4cb60fe2e3e76ebcb3cd3610be7e9bb505be70ddfdb1407498c5d534d3dee0cc",
+          "message": "design.clearance finding",
+          "resource": {
+            "kind": "pcb",
+            "path": "board.kicad_pcb",
+          },
+          "ruleId": "design.clearance",
+          "severity": "medium",
+        },
+      ],
+    },
+    "outputs": [
+      {
+        "added": 0,
+        "changed": 1,
+        "kind": "gerber",
+        "removed": 0,
+        "status": "changed",
+      },
+    ],
+  },
+  "generatedAt": "2026-06-22T00:00:00.000Z",
+  "readiness": {
+    "currentScore": 80,
+    "currentStatus": "at-risk",
+    "newlyMissingRequired": [],
+    "previousScore": 60,
+    "previousStatus": "blocked",
+    "resolvedRequired": [
+      "drill",
+    ],
+    "scoreDelta": 20,
+    "statusChanged": true,
+  },
+  "schemaVersion": 1,
+  "summary": {
+    "bomChanged": 2,
+    "findingsAdded": 1,
+    "findingsRemoved": 1,
+    "outputsChanged": 1,
+    "scoreDelta": 20,
+  },
+  "tool": {
+    "name": "boardreadyops",
+    "version": "0.0.0-test",
+  },
+}
+`;

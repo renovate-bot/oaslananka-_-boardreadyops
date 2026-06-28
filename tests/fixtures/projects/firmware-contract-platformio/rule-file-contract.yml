@@ -1,0 +1,12 @@
+version: 1
+projects:
+  - path: .
+    pinmap: pins.yml
+rules:
+  firmware.platformio-pin-contract:
+    file: platformio-pins-good.yml
+  drc.kicad:
+    enabled: false
+  erc.kicad:
+    enabled: false
+fail-on: high

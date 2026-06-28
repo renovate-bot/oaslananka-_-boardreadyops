@@ -1,0 +1,138 @@
+{
+  "name": "boardreadyops",
+  "version": "1.7.2",
+  "description": "BoardReadyOps checks KiCad hardware repositories for production readiness before fabrication.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Osman Aslan",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oaslananka/boardreadyops.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oaslananka/boardreadyops/issues"
+  },
+  "homepage": "https://github.com/oaslananka/boardreadyops#readme",
+  "engines": {
+    "node": "^22.14.0 || ^24.0.0"
+  },
+  "packageManager": "pnpm@11.8.0+sha512.c1f5e7c4cb241c8f174b743851d82f42b802324afc8b0f116b96adb15aa06664948dde36960a3ba1079ba5b4b29dd0140135b94b5b5f5263592249d68e555f26",
+  "bin": {
+    "boardreadyops": "dist/cli/index.cjs"
+  },
+  "files": [
+    "dist",
+    "examples",
+    "packages/plugin-sdk",
+    "schemas",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "SECURITY.md",
+    "action.yml"
+  ],
+  "scripts": {
+    "prepare": "node scripts/prepare.mjs",
+    "fmt": "biome format --write .",
+    "format": "biome format --write .",
+    "lint": "biome check . && pnpm run i18n:check",
+    "lint:fix": "biome check --write .",
+    "i18n:check": "node scripts/check-i18n.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:int": "vitest run tests/integration",
+    "test:action": "pnpm run build && vitest run tests/action",
+    "test:a11y": "vitest run tests/unit/report/html.test.ts tests/unit/scripts/check-docs-a11y.test.ts && pnpm run docs:a11y",
+    "test:property": "vitest run tests/property",
+    "test:snapshot": "vitest run tests/snapshot",
+    "test:bench": "vitest bench",
+    "coverage": "pnpm run build && vitest run --coverage tests/unit tests/action tests/property tests/snapshot",
+    "benchmark": "vitest bench --run",
+    "mutation": "stryker run",
+    "mutation:check": "node scripts/check-mutation-thresholds.mjs",
+    "build": "node scripts/build.mjs",
+    "build:binary": "node scripts/build-binary.mjs",
+    "build:binary:verify": "node scripts/verify-binaries.mjs",
+    "build:binary:assets": "node scripts/prepare-binary-release-assets.mjs",
+    "watch": "node scripts/watch.mjs",
+    "compatibility:docs": "node scripts/compatibility.mjs render",
+    "compatibility:check": "node scripts/compatibility.mjs render --check",
+    "compatibility:drift": "node scripts/compatibility.mjs drift",
+    "verify:dist": "node scripts/verify-dist.mjs && pnpm run check:size",
+    "check:size": "node scripts/check-bundle-sizes.mjs",
+    "verify:version": "node scripts/verify-version.mjs",
+    "verify:clean-tree": "node scripts/verify-clean-tree.mjs",
+    "verify:marketplace": "node scripts/check-marketplace-listing.mjs",
+    "verify:structure": "node scripts/verify-structure.mjs",
+    "notice": "node scripts/build-notice.mjs",
+    "notice:check": "node scripts/build-notice.mjs --check",
+    "licenses:check": "node scripts/check-licenses.mjs",
+    "check:reuse": "node scripts/check-reuse.mjs",
+    "gc": "node scripts/gc.mjs",
+    "api:docs": "node scripts/generate-api-docs.mjs",
+    "release:history": "node scripts/generate-release-history.mjs",
+    "docs": "node scripts/compatibility.mjs render && node scripts/generate-rule-docs.mjs && node scripts/update-action-inputs-docs.mjs && pnpm run api:docs && pnpm run release:history && node scripts/docs-build.mjs",
+    "docs:a11y": "node scripts/check-docs-a11y.mjs",
+    "docs:serve": "mkdocs serve",
+    "knip": "knip",
+    "sbom": "node scripts/generate-sbom.mjs",
+    "verify": "pnpm run lint && pnpm run typecheck && pnpm run knip && pnpm run compatibility:check && pnpm run build && pnpm run verify:dist && pnpm run verify:version && pnpm run verify:marketplace && pnpm run test:unit && pnpm run test:property && pnpm run test:snapshot && pnpm run test:action && pnpm run test:a11y && pnpm run coverage && pnpm run verify:structure && pnpm run gc && pnpm run docs && pnpm run security",
+    "security": "pnpm audit --audit-level moderate && pnpm run licenses:check && pnpm run notice:check && pnpm run check:reuse",
+    "generated:check": "pnpm run notice:check && pnpm run compatibility:check",
+    "verify:release-channels": "node scripts/verify-release-channels.mjs",
+    "verify:release": "pnpm run verify && pnpm run verify:release-channels && pnpm run verify:clean-tree"
+  },
+  "lint-staged": {
+    "{src,scripts,tests}/**/*.{ts,tsx,js,mjs,cjs}": [
+      "biome check --write --no-errors-on-unmatched"
+    ],
+    "{commitlint,vitest,stryker}.config.{js,mjs,cjs,ts}": [
+      "biome check --write --no-errors-on-unmatched"
+    ],
+    "*.{json,jsonc,md,yaml,yml}": [
+      "biome format --write --no-errors-on-unmatched"
+    ]
+  },
+  "devDependencies": {
+    "@actions/artifact": "6.2.1",
+    "@actions/core": "3.0.1",
+    "@actions/github": "9.1.1",
+    "@biomejs/biome": "2.5.1",
+    "@commitlint/cli": "21.1.0",
+    "@commitlint/config-conventional": "21.1.0",
+    "@stryker-mutator/core": "9.6.1",
+    "@stryker-mutator/vitest-runner": "9.6.1",
+    "@types/mustache": "4.2.6",
+    "@types/node": "24.13.2",
+    "@vitest/coverage-v8": "4.1.9",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "axe-core": "4.12.1",
+    "commander": "15.0.0",
+    "cosmiconfig": "9.0.2",
+    "esbuild": "0.28.1",
+    "fast-check": "4.8.0",
+    "fast-glob": "3.3.3",
+    "happy-dom": "20.10.6",
+    "html-validate": "11.5.3",
+    "husky": "9.1.7",
+    "js-yaml": "5.1.0",
+    "knip": "6.18.0",
+    "lint-staged": "17.0.8",
+    "mustache": "4.2.0",
+    "pa11y": "9.1.1",
+    "picocolors": "1.1.1",
+    "puppeteer": "25.2.0",
+    "typedoc": "0.28.19",
+    "typedoc-plugin-markdown": "4.12.0",
+    "typescript": "6.0.3",
+    "vite": "8.0.16",
+    "vitest": "4.1.9",
+    "zod": "4.4.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

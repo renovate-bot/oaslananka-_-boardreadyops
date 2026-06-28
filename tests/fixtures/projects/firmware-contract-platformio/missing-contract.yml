@@ -1,0 +1,10 @@
+version: 1
+projects:
+  - path: .
+    pinmap: pins.yml
+rules:
+  drc.kicad:
+    enabled: false
+  erc.kicad:
+    enabled: false
+fail-on: high

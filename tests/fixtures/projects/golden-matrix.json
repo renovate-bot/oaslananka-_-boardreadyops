@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "baseline-2layer-design",
+      "title": "valid 2-layer board outline baseline",
+      "risk": "project discovery and outline regressions",
+      "fixtures": ["valid-2layer"],
+      "requiredRules": ["design.board-outline"]
+    },
+    {
+      "id": "baseline-4layer-stackup",
+      "title": "valid 4-layer stackup baseline",
+      "risk": "layer stackup and controlled production baseline drift",
+      "fixtures": ["valid-4layer"],
+      "requiredRules": ["manufacturing.layer-stackup"]
+    },
+    {
+      "id": "vendor-complete-handoffs",
+      "title": "complete vendor handoff bundles",
+      "risk": "vendor profile regressions for fabrication-ready projects",
+      "fixtures": ["jlcpcb-complete", "pcbway-complete", "aisler-complete", "oshpark-complete"],
+      "requiredRules": ["manufacturing.outputs-present"]
+    },
+    {
+      "id": "vendor-layout-dfm",
+      "title": "vendor layout output baselines",
+      "risk": "fabricator-specific layout fixture drift",
+      "fixtures": ["jlcpcb-layout", "pcbway-layout", "aisler-layout", "oshpark-layout"],
+      "requiredRules": ["manufacturing.outputs-present"]
+    },
+    {
+      "id": "manufacturing-output-failures",
+      "title": "missing and stale production outputs",
+      "risk": "release bundles missing Gerber, drill, position, or stale files",
+      "fixtures": [
+        "manufacturing-missing-outputs",
+        "manufacturing-stale-outputs",
+        "missing-gerber",
+        "missing-drill",
+        "missing-position"
+      ],
+      "requiredRules": ["manufacturing.outputs-present"]
+    },
+    {
+      "id": "panel-and-jobset",
+      "title": "panelization and KiCad jobset output coverage",
+      "risk": "panel, jobset, and output manifest regressions",
+      "fixtures": ["panel-board", "jobset-missing-output"],
+      "requiredRules": ["manufacturing.panel-sanity", "manufacturing.jobset-outputs"]
+    },
+    {
+      "id": "bom-supply-chain",
+      "title": "BOM lifecycle, EOL, MPN, DNP, and single-source checks",
+      "risk": "supply-chain readiness and assembly sourcing regressions",
+      "fixtures": ["bom-lifecycle", "bom-eol", "bom-missing-mpn", "bom-dnp-consistency", "bom-single-source"],
+      "requiredRules": [
+        "bom.lifecycle",
+        "bom.eol-detection",
+        "bom.missing-mpn",
+        "bom.dnp-consistency",
+        "bom.single-source"
+      ]
+    },
+    {
+      "id": "variant-and-kicad-compatibility",
+      "title": "variant BOM and KiCad compatibility cases",
+      "risk": "variant mapping and KiCad-version-specific parser drift",
+      "fixtures": ["variant-bom-mismatch", "kicad10-variants", "kicad9-compat"],
+      "requiredRules": ["bom.variant-consistency"]
+    },
+    {
+      "id": "pinmap-and-firmware-contracts",
+      "title": "pinmap and firmware contract checks",
+      "risk": "MCU pin mapping, schematic labels, and firmware contract drift",
+      "fixtures": ["pinmap-mismatch", "pinmap-net-label-mismatch", "firmware-contract-platformio"],
+      "requiredRules": ["pinmap.verify", "pinmap.net-label", "firmware.platformio-pin-contract"]
+    },
+    {
+      "id": "release-readiness",
+      "title": "release metadata and revision gates",
+      "risk": "release package metadata, tag, changelog, and revision drift",
+      "fixtures": ["release-ready", "release-bad-version-format", "release-missing-revision", "release-tag-mismatch"],
+      "requiredRules": ["release.version-format", "release.revision-set"]
+    },
+    {
+      "id": "negative-all-violations",
+      "title": "combined negative manufacturing fixture",
+      "risk": "multi-rule failure aggregation drift",
+      "fixtures": ["all-violations"],
+      "requiredRules": ["design.board-outline", "manufacturing.outputs-present", "manufacturing.panel-sanity"]
+    }
+  ]
+}

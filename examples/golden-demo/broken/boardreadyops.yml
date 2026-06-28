@@ -1,0 +1,26 @@
+# Golden demo - "broken" board. Run: boardreadyops run examples/golden-demo/broken
+version: 1
+projects:
+  - path: .
+    bom: demo-bom.csv
+rules:
+  # Keep the demo offline-friendly: DRC/ERC need kicad-cli.
+  drc.kicad:
+    enabled: false
+  erc.kicad:
+    enabled: false
+  release.changelog-present:
+    enabled: false
+  release.revision-set:
+    enabled: false
+  manufacturing.fab-notes:
+    enabled: false
+  design.copper-balance:
+    enabled: false
+  # Opt-in rules that this demo showcases.
+  design.unique-references:
+    enabled: true
+  bom.compliance:
+    enabled: true
+    require: true
+fail-on: high
